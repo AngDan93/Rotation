@@ -1,21 +1,29 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using static System.Math;
-using static System.Convert;
+
 using SolidWorks.Interop.sldworks;
 using SolidWorks.Interop.swconst;
+
+using static System.Math;
+using static System.Convert;
+
+/// <summary>
+/// Preconditions:
+///1.Open an assembly with at least a component.
+///2. Run the program.
+///3. Select a component.
+///4. Change it the angles.
+///
+///Postconditions:
+///1.Look the component rotated
+/// </summary>
+/// 
 
 namespace Rotation
 {
     public partial class Rotation : Form
     {
+
         public Rotation()
         {
             InitializeComponent();
@@ -24,16 +32,18 @@ namespace Rotation
         private void Form1_Load(object sender, EventArgs e)
         {
             swApp = new SldWorks();
-            if(swModel == null)
+            if (swModel == null)
             {
                 swModel = (ModelDoc2)swApp.ActiveDoc;
 
             }
         }
-
+        /// <summary>
+        /// Allows to rotate XYZ axis a component in an assembly 
+        /// </summary>
         private void rotate()
         {
-            
+
 
             double A = ToDouble(axisX.Value) * PI / 180;
             double B = ToDouble(axisY.Value) * PI / 180;
@@ -50,7 +60,7 @@ namespace Rotation
 
 
             ////Only Rotate in X
-            /////double angle = ToDouble(axisX.Value) * PI / 180;
+            //double angle = ToDouble(axisX.Value) * PI / 180;
             //double[] m = new double[9]
             //{
             //    1, 0         , 0,
@@ -79,20 +89,18 @@ namespace Rotation
 
             try
             {
-               
+
                 if (swApp != null)
                 {
-                   
+
                     if (swModel != null)
                     {
                         if (swModel.GetType() == (int)swDocumentTypes_e.swDocASSEMBLY)
                         {
-                            
                             if (myComp == null)
                             {
                                 selectComp();
                             }
-                            
 
                             if (myComp != null)
                             {
@@ -109,31 +117,52 @@ namespace Rotation
                                 MathTransform transform = (MathTransform)swMathUtility.CreateTransform(XformIn);
                                 bool sts = myComp.SetTransformAndSolve2(transform);
                                 if (sts)
-                                     swModel.EditRebuild3();
+                                    swModel.EditRebuild3();
                             }
-
                         }
                         else
                         {
                             MessageBox.Show("Please, open an assembly", "Component selector", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-
                         }
-
                     }
-                    
                 }
-                
-
             }
             catch (Exception)
             {
             }
-
         }
+        /// <summary>
+        /// Allows select a componet in an assembly
+        /// </summary>
+        private void selectComp()
+        {
+            SelectionMgr selMgr = (SelectionMgr)swModel.SelectionManager;
+            MessageBox.Show("Please, select a component", "Component selector", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 
-        public SldWorks swApp;
-        public ModelDoc2 swModel;
-        Component2 myComp;
+            if (selMgr.GetSelectedObjectCount2(Mark: -1) != 0)
+            {
+                if (selMgr.GetSelectedObjectType3(1, -1) == (int)swSelectType_e.swSelCOMPONENTS)
+                {
+                    myComp = selMgr.GetSelectedObject6(1, -1);
+                }
+                else
+                {
+                    if (selMgr.GetSelectedObjectType3(1, -1) == (int)swSelectType_e.swSelFACES)
+                    {
+                        Entity swEnt = (Entity)selMgr.GetSelectedObject6(1, -1);
+                        myComp = (Component2)swEnt.GetComponent();
+                    }
+                    else
+                    {
+                        MessageBox.Show("No selected component");
+                    }
+                }
+            }
+            else
+            {
+                MessageBox.Show("No selected component");
+            }
+        }
 
         private void axisX_ValueChanged(object sender, EventArgs e)
         {
@@ -149,40 +178,14 @@ namespace Rotation
         {
             rotate();
         }
-        private void selectComp()
-        {
-            SelectionMgr selMgr = (SelectionMgr)swModel.SelectionManager;
-            MessageBox.Show("Please, select a component", "Component selector", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-
-            if (selMgr.GetSelectedObjectCount2(Mark: -1) != 0)
-            {
-
-                if (selMgr.GetSelectedObjectType3(1, -1) != (int)swSelectType_e.swSelCOMPONENTS)
-                {
-                    if (selMgr.GetSelectedObjectType3(1, -1) == (int)swSelectType_e.swSelFACES)
-                    {
-                        Entity swEnt = (Entity)selMgr.GetSelectedObject6(1, -1);
-                        myComp = (Component2)swEnt.GetComponent();
-                    }
-                    else
-                    {
-                        MessageBox.Show("No selected component");
-                    }
-
-                }
-                else
-                {
-                    myComp = selMgr.GetSelectedObject6(1, -1);
-                }
 
 
-            }
-            else
-            {
-                MessageBox.Show("No selected component");
-            }
-
-        }
+        /// <summary>
+        /// 
+        /// </summary>
+        public SldWorks swApp;
+        public ModelDoc2 swModel;
+        Component2 myComp;
     }
 
 }
